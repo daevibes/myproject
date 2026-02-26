@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from 'react';
-import Phaser from 'phaser';
-// @ts-ignore - MainScene might not exist yet during initial setup
+import * as Phaser from 'phaser';
 import { MainScene } from '@/game/scenes/MainScene';
 
 export default function GameCanvas() {
@@ -13,14 +12,18 @@ export default function GameCanvas() {
             const config: Phaser.Types.Core.GameConfig = {
                 type: Phaser.AUTO,
                 parent: gameRef.current,
-                width: 800,
-                height: 600,
-                backgroundColor: '#1a1a1a',
+                scale: {
+                    mode: Phaser.Scale.FIT,
+                    autoCenter: Phaser.Scale.CENTER_BOTH,
+                    width: 1280,
+                    height: 720,
+                },
+                backgroundColor: '#2d2d2d',
                 scene: [MainScene],
                 physics: {
                     default: 'arcade',
                     arcade: {
-                        gravity: { x: 0, y: 0 }
+                        gravity: { x: 0, y: 0 },
                     }
                 },
             };
@@ -33,5 +36,5 @@ export default function GameCanvas() {
         }
     }, []);
 
-    return <div ref={gameRef} className="rounded-xl overflow-hidden border-4 border-gray-800 shadow-2xl" />;
+    return <div ref={gameRef} className="rounded-xl overflow-hidden border-4 border-gray-800 shadow-2xl w-full h-full max-w-[1280px] max-h-[720px] mx-auto" />;
 }
