@@ -17,11 +17,19 @@ export async function GET(req: NextRequest) {
         .eq('game_user_id', game_user_id)
         .order('created_at', { ascending: false });
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    if (error) {
+        console.error('[Inventory API Error]:', error.message);
+        return NextResponse.json({ error: '인벤토리 조회 중 오류가 발생했습니다.' }, { status: 500 });
+    }
     return NextResponse.json({ items: data }, { status: 200 });
 }
 
 export async function POST(req: NextRequest) {
+    // #20. 샘플 아이템 생성 API 보호 (로컬/테스트 환경에서만 허용 예시)
+    if (process.env.NODE_ENV === 'production' && !req.headers.get('x-admin-key')) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const { game_user_id } = await req.json();
 
     const dummyItem = {
@@ -33,6 +41,9 @@ export async function POST(req: NextRequest) {
 
     const { data, error } = await supabase.from('inventory').insert(dummyItem).select().single();
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    if (error) {
+        console.error('[Sample Create Error]:', error.message);
+        return NextResponse.json({ error: '아이템 생성 실패' }, { status: 500 });
+    }
     return NextResponse.json({ message: 'Sample item created', item: data }, { status: 200 });
 }

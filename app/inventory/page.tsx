@@ -1,13 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { InventoryItem } from "@/types/inventory";
 
 const TEST_USER_ID = "usr_test_12345";
-const TEST_STUDIO_ID = "std_test_abcde";
-const NETWORK = "sui-testnet";
+
+// #10. Sui 지갑 주소 정규식
+const SUI_ADDRESS_REGEX = /^0x[a-fA-F0-9]{64}$/;
 
 export default function InventoryPage() {
-    const [items, setItems] = useState<any[]>([]);
+    const [items, setItems] = useState<InventoryItem[]>([]);
     const [walletAddress, setWalletAddress] = useState("");
     const [isWalletSaved, setIsWalletSaved] = useState(false);
     const [loading, setLoading] = useState(false);
@@ -33,11 +35,14 @@ export default function InventoryPage() {
     };
 
     const handleSaveWallet = () => {
-        if (!walletAddress.trim()) {
-            alert("Sui 지갑 주소를 입력해주세요!");
+        const trimmed = walletAddress.trim();
+        // #10. 클라이언트 사이드 검증 추가
+        if (!SUI_ADDRESS_REGEX.test(trimmed)) {
+            alert("유효한 Sui 지갑 주소를 입력해주세요 (0x + 64자리 hex)");
             return;
         }
-        localStorage.setItem("fortem_wallet_address", walletAddress);
+        localStorage.setItem("fortem_wallet_address", trimmed);
+        setWalletAddress(trimmed);
         setIsWalletSaved(true);
         setMessage("지갑 주소가 저장되었습니다. 이제 아이템을 내보낼 수 있습니다!");
     };
@@ -56,19 +61,18 @@ export default function InventoryPage() {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    studio_id: TEST_STUDIO_ID,
                     game_user_id: TEST_USER_ID,
-                    network: NETWORK,
                     in_game_item_id: itemId,
                     wallet_address: walletAddress,
-                    metadata: { name: `Item ${itemId}`, attack: 100 }
+                    metadata: { name: `Item ${itemId}`, attributes: [{ trait_type: "Attack", value: 100 }] }
                 }),
             });
 
             const data = await res.json();
 
             if (!res.ok) {
-                throw new Error(data.error || "민팅 실패");
+                // #15. UX 메시지 개선
+                throw new Error(data.error || "민팅 중 문제가 발생했습니다.");
             }
 
             setMessage(`성공! 트랜잭션: ${data.transaction_id}`);
@@ -76,7 +80,8 @@ export default function InventoryPage() {
 
         } catch (error: any) {
             console.error(error);
-            setMessage(`에러 발생: ${error.message} (DB 롤백 완료됨)`);
+            // #15 해결: UX 메시지 "롤백 완료" -> "상태 복구 중"으로 수정
+            setMessage(`에러 발생: ${error.message} (상태 복구 중)`);
             fetchItems();
         } finally {
             setLoading(false);
@@ -119,13 +124,13 @@ export default function InventoryPage() {
                     </div>
                 ) : (
                     <div className="flex items-center justify-between bg-white p-4 rounded border border-green-200">
-                        <div>
+                        <div className="overflow-hidden mr-4">
                             <span className="text-green-600 font-bold mr-2">✓ 연결됨:</span>
-                            <span className="text-gray-700 font-mono">{walletAddress}</span>
+                            <span className="text-gray-700 font-mono break-all text-xs">{walletAddress}</span>
                         </div>
                         <button
                             onClick={() => setIsWalletSaved(false)}
-                            className="text-sm text-gray-500 underline hover:text-gray-700"
+                            className="text-sm text-gray-500 underline hover:text-gray-700 whitespace-nowrap"
                         >
                             지갑 변경
                         </button>
@@ -155,14 +160,20 @@ export default function InventoryPage() {
                     <div key={item.id} className="border p-6 rounded-lg shadow hover:shadow-md transition">
                         <h3 className="text-lg font-bold mb-2">{item.in_game_item_id}</h3>
                         <p className="text-sm text-gray-600 mb-4">
-                            상태: <span className="font-semibold">{item.status}</span>
+                            상태: <span className={`font-semibold ${item.status === 'mint_failed' ? 'text-red-500' :
+                                item.status === 'minting_in_progress' ? 'text-orange-500' : 'text-gray-700'
+                                }`}>{item.status}</span>
                         </p>
+
+                        {/* #05 UI: mint_failed 상태일 경우 다시 시도 가능하게 하거나 알림 */}
                         <button
                             onClick={() => exportItem(item.in_game_item_id)}
-                            disabled={loading || item.is_minted || item.status !== 'available'}
+                            disabled={loading || item.is_minted || item.status === 'minting_in_progress'}
                             className="w-full bg-black text-white px-4 py-2 rounded disabled:bg-gray-400 hover:bg-gray-800 transition"
                         >
-                            {item.is_minted ? "내보내기 완료" : item.status !== 'available' ? "처리 중..." : "ForTem으로 내보내기 (Export)"}
+                            {item.is_minted ? "내보내기 완료" :
+                                item.status === 'minting_in_progress' ? "처리 중..." :
+                                    item.status === 'mint_failed' ? "다시 시도" : "내보내기 (Export)"}
                         </button>
                     </div>
                 ))}

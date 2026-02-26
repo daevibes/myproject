@@ -40,7 +40,21 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# --- ForTem Project 환경변수 및 보안 설정 추가 ---
+# 환경변수 파일 (보안 키 포함)
+.env
 .env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# 의존성 및 빌드 파일
 node_modules/
 .next/
+out/
+build/
+dist/
 
+# OS 관련 파일
+.DS_Store
+Thumbs.db
