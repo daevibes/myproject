@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { ITEM_DEFS } from '@/game/config/items';
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -25,25 +26,42 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-    // #20. 샘플 아이템 생성 API 보호 (로컬/테스트 환경에서만 허용 예시)
-    if (process.env.NODE_ENV === 'production' && !req.headers.get('x-admin-key')) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const token = req.headers.get('authorization')?.replace('Bearer ', '');
+    const { game_user_id, in_game_item_id, item_uid } = await req.json();
+
+    if (!game_user_id || !in_game_item_id || !item_uid) {
+        return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    const { game_user_id } = await req.json();
+    // JWT 소유권 검증: 토큰의 실제 유저 ID와 요청의 game_user_id 비교
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    if (authError || !user || user.id !== game_user_id) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+    }
 
-    const dummyItem = {
-        game_user_id: game_user_id,
-        in_game_item_id: `sword_lv${Math.floor(Math.random() * 99) + 1}`,
+    // 아이템 ID 유효성 검증
+    if (!ITEM_DEFS[in_game_item_id]) {
+        return NextResponse.json({ error: 'Invalid item ID' }, { status: 400 });
+    }
+
+    const itemData = {
+        game_user_id,
+        in_game_item_id,
+        item_uid,
         is_minted: false,
         status: 'available'
     };
 
-    const { data, error } = await supabase.from('inventory').insert(dummyItem).select().single();
+    const { data, error } = await supabase.from('inventory').insert(itemData).select().single();
 
     if (error) {
-        console.error('[Sample Create Error]:', error.message);
-        return NextResponse.json({ error: '아이템 생성 실패' }, { status: 500 });
+        // 이미 저장된 아이템인 경우 (중복 uid) 무시
+        if (error.code === '23505') {
+            return NextResponse.json({ message: 'Item already saved (dupe)' }, { status: 200 });
+        }
+        console.error('[Inventory Insert Error]:', error.message);
+        return NextResponse.json({ error: '아이템 저장 실패' }, { status: 500 });
     }
-    return NextResponse.json({ message: 'Sample item created', item: data }, { status: 200 });
+
+    return NextResponse.json({ message: 'Item saved successfully', item: data }, { status: 200 });
 }

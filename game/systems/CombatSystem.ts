@@ -53,8 +53,9 @@ export class CombatSystem {
                 PLAYER_ATK_RANGE,
                 PLAYER_ATK_ARC
             )) {
-                monster.takeDamage(PLAYER_ATK);
-                this.showDamagePopup(monster.x, monster.y - 20, PLAYER_ATK);
+                const totalAtk = PLAYER_ATK + player.bonusAtk;
+                monster.takeDamage(totalAtk);
+                this.showDamagePopup(monster.x, monster.y - 20, totalAtk);
                 this.applyKnockback(monster, player.x, player.y);
                 hitCount++;
             }

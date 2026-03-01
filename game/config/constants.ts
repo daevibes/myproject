@@ -75,8 +75,16 @@ export const RUNNER_COLOR = 0xff6600;
 export const RUNNER_DETECT_RANGE = 300;    // px (추격 시작)
 export const RUNNER_RELEASE_RANGE = 400;   // px (추격 해제, 히스테리시스)
 
-// 테스트 스폰
-export const SPAWN_INTERVAL_INFANTRY = 3000; // ms
-export const SPAWN_INTERVAL_RUNNER = 6000;   // ms
-export const SPAWN_MAX_MONSTERS = 15;
-export const SPAWN_START_DELAY = 2000;       // ms
+// === Phase 5: 웨이브 상수 ===
+export const WAVE_REST_TIME = 5000;          // ms (웨이브 간 대기)
+export const WAVE_HP_SCALE = 0.10;           // 웨이브당 HP +10%
+export const WAVE_SPEED_SCALE = 0.05;        // 웨이브당 Speed +5%
+export const VICTORY_BONUS_POINTS = 50;
+export const SPAWN_MAX_MONSTERS = 20;
+
+// === Phase 3: 아이템 상수 ===
+export const INVENTORY_MAX_SLOTS = 20;
+export const ITEM_DROP_SIZE = 20;            // px
+export const ITEM_PICKUP_RANGE = 50;         // px
+export const ITEM_POPUP_DURATION = 800;      // ms
+export const BURN_POINT_REWARD = 10;

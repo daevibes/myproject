@@ -15,8 +15,13 @@ type RunnerState = 'MOVE_TO_PRINCESS' | 'CHASE_PLAYER';
 export class Runner extends Monster {
     private aiState: RunnerState;
 
-    constructor(scene: Phaser.Scene, x: number, y: number) {
-        super(scene, x, y, RUNNER_SIZE, RUNNER_COLOR, RUNNER_HP, RUNNER_ATK, RUNNER_SPEED);
+    constructor(scene: Phaser.Scene, x: number, y: number, hpScale = 1, speedScale = 1) {
+        super(
+            scene, x, y, RUNNER_SIZE, RUNNER_COLOR,
+            Math.round(RUNNER_HP * hpScale),
+            RUNNER_ATK,
+            Math.round(RUNNER_SPEED * speedScale)
+        );
         this.aiState = 'MOVE_TO_PRINCESS';
     }
 

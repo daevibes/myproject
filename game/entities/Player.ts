@@ -3,15 +3,18 @@ import {
     PLAYER_SIZE,
     PLAYER_SPEED,
     PLAYER_HP,
+    PLAYER_ATK,
     PLAYER_ATK_COOLDOWN,
     PLAYER_IFRAME,
 } from '../config/constants';
+import { useGameStore } from '@/lib/store/useGameStore';
 
 export class Player extends Phaser.GameObjects.Rectangle {
     declare body: Phaser.Physics.Arcade.Body;
 
     public hp: number;
     public maxHp: number;
+    public bonusAtk: number;
     public facingAngle: number;       // radian, 기본값: 아래(pi/2)
     public lastAttackTime: number;
     public isInvincible: boolean;
@@ -26,9 +29,14 @@ export class Player extends Phaser.GameObjects.Rectangle {
 
         this.body.setCollideWorldBounds(true);
 
-        this.hp = PLAYER_HP;
-        this.maxHp = PLAYER_HP;
-        this.facingAngle = Math.PI / 2; // 아래
+        const { equipped } = useGameStore.getState();
+        const hpBonus = (equipped.weapon?.def.hpBonus ?? 0) + (equipped.armor?.def.hpBonus ?? 0);
+        const atkBonus = (equipped.weapon?.def.atkBonus ?? 0) + (equipped.armor?.def.atkBonus ?? 0);
+
+        this.hp = PLAYER_HP + hpBonus;
+        this.maxHp = PLAYER_HP + hpBonus;
+        this.bonusAtk = atkBonus;
+        this.facingAngle = Math.PI / 2;
         this.lastAttackTime = 0;
         this.isInvincible = false;
 

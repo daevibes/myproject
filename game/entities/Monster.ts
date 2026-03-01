@@ -56,7 +56,8 @@ export abstract class Monster extends Phaser.GameObjects.Rectangle {
         this.body.setVelocity(0);
         this.body.enable = false;
 
-        // 페이드아웃 후 제거
+        this.scene.events.emit('monster-died', this.x, this.y);
+
         this.scene.tweens.add({
             targets: this,
             alpha: 0,

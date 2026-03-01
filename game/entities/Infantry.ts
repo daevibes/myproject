@@ -9,8 +9,13 @@ import {
 } from '../config/constants';
 
 export class Infantry extends Monster {
-    constructor(scene: Phaser.Scene, x: number, y: number) {
-        super(scene, x, y, INFANTRY_SIZE, INFANTRY_COLOR, INFANTRY_HP, INFANTRY_ATK, INFANTRY_SPEED);
+    constructor(scene: Phaser.Scene, x: number, y: number, hpScale = 1, speedScale = 1) {
+        super(
+            scene, x, y, INFANTRY_SIZE, INFANTRY_COLOR,
+            Math.round(INFANTRY_HP * hpScale),
+            INFANTRY_ATK,
+            Math.round(INFANTRY_SPEED * speedScale)
+        );
     }
 
     updateAI(
