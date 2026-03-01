@@ -39,7 +39,16 @@ export default function InventoryPage() {
     }, []);
 
     useEffect(() => {
-        if (userId) fetchItems();
+        if (!userId) return;
+        fetchItems();
+        // 프로필에서 저장된 ForTem 지갑 주소 불러오기
+        supabase.from('profiles').select('fortem_wallet_address').eq('id', userId).single()
+            .then(({ data }) => {
+                if (data?.fortem_wallet_address) {
+                    setWalletAddress(data.fortem_wallet_address);
+                    setIsWalletSaved(true);
+                }
+            });
     }, [userId]);
 
     const fetchItems = async () => {
@@ -314,13 +323,19 @@ export default function InventoryPage() {
                                 className="border border-gray-300 rounded px-4 py-2 flex-grow focus:outline-none focus:ring-2 focus:ring-purple-400"
                             />
                             <button
-                                onClick={() => {
-                                    if (walletAddress.length < 5) {
-                                        alert("올바른 지갑 주소를 입력해주세요.");
+                                onClick={async () => {
+                                    if (!/^0x[a-fA-F0-9]{64}$/.test(walletAddress)) {
+                                        alert("올바른 Sui 지갑 주소(0x + 64자리 hex)를 입력해주세요.");
                                         return;
                                     }
-                                    const confirmSave = confirm("지갑 주소는 최초 1회 저장 후 수정할 수 없습니다.\n정말 이 주소로 저장하시겠습니까?");
-                                    if (confirmSave) setIsWalletSaved(true);
+                                    const confirmSave = confirm("지갑 주소는 저장 후 수정할 수 없습니다.\n정말 이 주소로 저장하시겠습니까?");
+                                    if (!confirmSave) return;
+                                    // Supabase profiles에 ForTem 지갑 주소 영속화
+                                    await supabase.from('profiles').upsert({
+                                        id: userId,
+                                        fortem_wallet_address: walletAddress,
+                                    });
+                                    setIsWalletSaved(true);
                                 }}
                                 className="bg-purple-600 text-white px-6 py-2 rounded font-semibold hover:bg-purple-700 transition"
                             >

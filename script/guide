@@ -1,0 +1,21 @@
+1. Node.js 및 npm (자바스크립트 실행 환경)안티그래비티가 웹 기반의 게임 화면을 띄우고, Sui 블록체인 네트워크와 통신하기 위해 가장 필수적인 엔진입니다.
+Git (버전 관리 및 백업 도구)
+
+도구 (Tool)	목적 (Purpose)	비고 (Note)
+npx create-next-app@latest .치	ForTem API 통신에 필수
+Git	AI의 실수 대비 코드 백업	타임머신 역할
+Antigravity	자동화 코딩 실행	AI Studio API 키 연동 확인 요망
+
+프론트엔드/백엔드: Next.js (App Router) + TypeScript
+
+UI/디자인: Tailwind CSS
+
+결제 연동: ForTem API (Sui Blockchain)
+
+Translation (Tech Stack):
+
+Frontend/Backend: Next.js (App Router) + TypeScript
+
+UI/Design: Tailwind CSS
+
+Payment Integration: ForTem API (Sui Blockchain)

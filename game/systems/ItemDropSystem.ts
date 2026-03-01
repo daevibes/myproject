@@ -2,7 +2,7 @@ import * as Phaser from 'phaser';
 import { ItemDrop } from '../entities/ItemDrop';
 import { Player } from '../entities/Player';
 import { ITEM_DEFS } from '../config/items';
-import { rollDrop } from '../config/dropTable';
+import { rollDrop, rollBossDrops } from '../config/dropTable';
 import { ITEM_PICKUP_RANGE, ITEM_POPUP_DURATION } from '../config/constants';
 import { useGameStore, OwnedItem } from '@/lib/store/useGameStore';
 
@@ -81,6 +81,17 @@ export class ItemDropSystem {
             duration: ITEM_POPUP_DURATION,
             onComplete: () => text.destroy(),
         });
+    }
+
+    /** 확률 체크 없이 지정된 아이템을 강제 드롭 */
+    forceDrop(x: number, y: number, itemId: string): void {
+        const def = ITEM_DEFS[itemId];
+        if (!def) return;
+
+        const offsetX = (Math.random() - 0.5) * 40;
+        const offsetY = (Math.random() - 0.5) * 40;
+        const drop = new ItemDrop(this.scene, x + offsetX, y + offsetY, def);
+        this.drops.push(drop);
     }
 
     getDrops(): ItemDrop[] {

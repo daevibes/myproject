@@ -2,6 +2,7 @@ import * as Phaser from 'phaser';
 import { Monster } from '../entities/Monster';
 import { Infantry } from '../entities/Infantry';
 import { Runner } from '../entities/Runner';
+import { Boss } from '../entities/Boss';
 import { Position, SPAWN_MAX_MONSTERS } from '../config/constants';
 
 export class SpawnSystem {
@@ -40,11 +41,24 @@ export class SpawnSystem {
         }
     }
 
+    /** 챕터 보스 스폰 */
+    spawnBoss(
+        bossIndex: number,
+        chapter: number,
+        statsScale: number,
+        monstersArray: Monster[]
+    ): void {
+        const sp = this.getRandomSpawnPoint();
+        const boss = new Boss(this.scene, sp.x, sp.y, bossIndex, chapter, statsScale);
+        this.scene.physics.add.collider(boss, this.obstacleGroup);
+        monstersArray.push(boss);
+    }
+
     private getRandomSpawnPoint(): Position {
         return Phaser.Utils.Array.GetRandom(this.spawnPoints);
     }
 
     destroy(): void {
-        // WaveManager handles timing now; nothing to clean up here
+        // WaveManager handles timing; nothing to clean up here
     }
 }

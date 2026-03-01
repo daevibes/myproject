@@ -6,6 +6,7 @@ import {
     PLAYER_ATK,
     PLAYER_ATK_COOLDOWN,
     PLAYER_IFRAME,
+    MIN_DAMAGE_RATIO,
 } from '../config/constants';
 import { useGameStore } from '@/lib/store/useGameStore';
 
@@ -15,9 +16,15 @@ export class Player extends Phaser.GameObjects.Rectangle {
     public hp: number;
     public maxHp: number;
     public bonusAtk: number;
+    public defBonus: number;
+    public speedBonus: number;
     public facingAngle: number;       // radian, 기본값: 아래(pi/2)
     public lastAttackTime: number;
     public isInvincible: boolean;
+
+    // 디버프 (보스 기믹 등에서 적용)
+    public slowMultiplier: number = 1.0;   // 이동속도 배율 (1.0 = 정상)
+    public atkCooldownMultiplier: number = 1.0; // 공격속도 쿨다운 배율 (1.0 = 정상)
 
     private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
     private wasd!: Record<string, Phaser.Input.Keyboard.Key>;
@@ -29,13 +36,28 @@ export class Player extends Phaser.GameObjects.Rectangle {
 
         this.body.setCollideWorldBounds(true);
 
+        // 6슬롯 장비 스탯 집계
         const { equipped } = useGameStore.getState();
-        const hpBonus = (equipped.weapon?.def.hpBonus ?? 0) + (equipped.armor?.def.hpBonus ?? 0);
-        const atkBonus = (equipped.weapon?.def.atkBonus ?? 0) + (equipped.armor?.def.atkBonus ?? 0);
+        let hpBonus = 0;
+        let atkBonus = 0;
+        let defBonus = 0;
+        let speedBonus = 0;
+
+        const seenUids = new Set<string>();
+        for (const item of Object.values(equipped)) {
+            if (!item || seenUids.has(item.uid)) continue;
+            seenUids.add(item.uid);
+            hpBonus    += item.def.hpBonus;
+            atkBonus   += item.def.atkBonus;
+            defBonus   += item.def.defBonus;
+            speedBonus += item.def.speedBonus;
+        }
 
         this.hp = PLAYER_HP + hpBonus;
         this.maxHp = PLAYER_HP + hpBonus;
         this.bonusAtk = atkBonus;
+        this.defBonus = defBonus;
+        this.speedBonus = speedBonus;
         this.facingAngle = Math.PI / 2;
         this.lastAttackTime = 0;
         this.isInvincible = false;
@@ -47,7 +69,7 @@ export class Player extends Phaser.GameObjects.Rectangle {
     }
 
     canAttack(time: number): boolean {
-        return time - this.lastAttackTime >= PLAYER_ATK_COOLDOWN;
+        return time - this.lastAttackTime >= PLAYER_ATK_COOLDOWN * this.atkCooldownMultiplier;
     }
 
     recordAttack(time: number): void {
@@ -75,7 +97,8 @@ export class Player extends Phaser.GameObjects.Rectangle {
 
     takeDamage(amount: number): void {
         if (this.isInvincible) return;
-        this.hp = Math.max(0, this.hp - amount);
+        const effectiveDmg = Math.max(Math.ceil(amount * MIN_DAMAGE_RATIO), amount - this.defBonus);
+        this.hp = Math.max(0, this.hp - effectiveDmg);
         this.isInvincible = true;
 
         // 깜빡임 이펙트 (0.5초간, 0.1초 간격 5회)
@@ -115,10 +138,16 @@ export class Player extends Phaser.GameObjects.Rectangle {
         if (vx !== 0 || vy !== 0) {
             this.facingAngle = Math.atan2(vy, vx);
             const len = Math.sqrt(vx * vx + vy * vy);
+            const speed = (PLAYER_SPEED + this.speedBonus) * this.slowMultiplier;
             this.body.setVelocity(
-                (vx / len) * PLAYER_SPEED,
-                (vy / len) * PLAYER_SPEED
+                (vx / len) * speed,
+                (vy / len) * speed
             );
         }
+    }
+
+    /** 총 공격력 (기본 + 보너스) */
+    get totalAtk(): number {
+        return PLAYER_ATK + this.bonusAtk;
     }
 }

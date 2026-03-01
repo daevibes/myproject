@@ -61,7 +61,7 @@ export const MONSTER_FLASH_DURATION = 80;  // ms
 
 // 보병 (Type A)
 export const INFANTRY_HP = 30;
-export const INFANTRY_SPEED = 60;
+export const INFANTRY_SPEED = 130;
 export const INFANTRY_ATK = 5;
 export const INFANTRY_SIZE = 28;
 export const INFANTRY_COLOR = 0xcc3333;
@@ -76,11 +76,25 @@ export const RUNNER_DETECT_RANGE = 300;    // px (추격 시작)
 export const RUNNER_RELEASE_RANGE = 400;   // px (추격 해제, 히스테리시스)
 
 // === Phase 5: 웨이브 상수 ===
-export const WAVE_REST_TIME = 5000;          // ms (웨이브 간 대기)
+export const WAVE_REST_TIME = 3000;          // ms (웨이브 간 대기)
 export const WAVE_HP_SCALE = 0.10;           // 웨이브당 HP +10%
-export const WAVE_SPEED_SCALE = 0.05;        // 웨이브당 Speed +5%
+export const WAVE_SPEED_SCALE = 0.08;        // 웨이브당 Speed +8%
 export const VICTORY_BONUS_POINTS = 50;
-export const SPAWN_MAX_MONSTERS = 20;
+export const SPAWN_MAX_MONSTERS = 100;
+
+// === Phase 5: 스킬 게이지 ===
+export const SKILL_GAUGE_PER_HIT = 2;        // 적중당 +2%
+export const SKILL_GAUGE_MAX = 100;
+
+// === Phase 5: 전투 입력 ===
+export const ATTACK_HOLD_INTERVAL = 400;     // 홀드 자동공격 간격(ms)
+
+// === Phase 5: 보스 / 챕터 ===
+export const BOSS_WAVE_INTERVAL = 8;         // 8의 배수마다 보스
+export const BOSS_CHAPTER_HP_SCALE = 1.5;   // 챕터당 보스 HP 배율
+export const BOSS_CHAPTER_ATK_SCALE = 1.3;  // 챕터당 보스 ATK 배율
+export const CHAPTER_MON_HP_SCALE = 1.5;    // 챕터당 일반 몬스터 HP 배율
+export const CHAPTER_MON_ATK_SCALE = 1.3;   // 챕터당 일반 몬스터 ATK 배율
 
 // === Phase 3: 아이템 상수 ===
 export const INVENTORY_MAX_SLOTS = 20;
@@ -88,3 +102,15 @@ export const ITEM_DROP_SIZE = 20;            // px
 export const ITEM_PICKUP_RANGE = 50;         // px
 export const ITEM_POPUP_DURATION = 800;      // ms
 export const BURN_POINT_REWARD = 10;
+
+// === Phase 5: DEF 최소 데미지 보정 ===
+export const MIN_DAMAGE_RATIO = 0.15;        // 원래 공격력의 최소 15%
+
+// === Phase 5: 몬스터 이속 Hard Cap ===
+export const MONSTER_SPEED_SCALE_CAP = 1.5;  // speedScale 최대치
+
+// === Phase 5: 체력 구슬 ===
+export const HEAL_ORB_DROP_CHANCE = 0.04;    // 4% 확률
+export const HEAL_ORB_HEAL_RATIO = 0.05;     // maxHp의 5% 회복
+export const HEAL_ORB_SIZE = 14;             // px
+export const HEAL_ORB_DURATION = 8000;       // 8초 후 소멸

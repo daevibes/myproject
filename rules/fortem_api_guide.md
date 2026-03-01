@@ -1,29 +1,42 @@
-<!-- fortem_api_guide.md -->
-# ForTem API Integration Guide (Minting & Redemption Flow)
+# ForTem API Integration Guide (Minting & Redemption)
 
-## 1. Overview
-본 문서는 Next.js 기반 미니 게임에서 ForTem SDK/API를 활용하여 **인게임 아이템의 NFT 변환(Export)** 및 **NFT의 인게임 아이템 전환(Redeem)** 생태계를 구축하기 위한 가이드입니다.
-기존 Web2 식별자(이메일, 이름 등)를 배제하고, 오직 `studio_id`와 `game_user_id`만을 사용하여 지갑 생성 및 자산 이동을 처리합니다.
-
-## 2. Core Identifiers (필수 식별자)
-모든 ForTem API 요청에는 다음 두 가지 식별자가 필수적으로 포함되어야 합니다.
-* `studio_id` (String): ForTem 대시보드에서 발급받은 게임 스튜디오 고유 식별자
-* `game_user_id` (String): 게임 데이터베이스(Supabase)에서 관리하는 유저의 고유 식별자 (UUID 형식 권장)
-
-## 3. API Endpoints (Next.js API Routes Proxy & Webhook)
-
-### 3.1. 지갑 조회 및 생성 (Wallet Provisioning)
-게임 진입 시, 해당 `game_user_id`에 연결된 Sui 지갑 주소를 조회하거나 생성합니다.
-
-* **Endpoint**: `POST /api/fortem/wallet/init`
-* **Request Body**:
+## 1. Wallet Initialization
+- **Endpoint**: `POST /api/fortem/wallet/init`
+- **Request Body**:
   ```json
   {
     "studio_id": "std_12345abcd",
-    "game_user_id": "usr_98765xyz"
+    "game_user_id": "usr_98765xyz",
+    "network": "sui-testnet"
   }
+Logic: game_user_id를 기반으로 ForTem Sui 지갑 주소를 조회하거나 백그라운드에서 생성한다.
 
-  
-  
+2. Export Item (Minting)
+Endpoint: POST /api/fortem/mint/export
+Request Body:
+code
+JSON
+{
+  "studio_id": "std_12345abcd",
+  "game_user_id": "usr_98765xyz",
+  "network": "sui-testnet",
+  "in_game_item_id": "sword_001",
+  "metadata": { "name": "Dragon Sword", "attack": 100 }
+}
+Logic: 서버(API)에서 유저의 인게임 아이템 소유 여부를 DB에서 먼저 확인한 후, 인게임 아이템을 삭제/잠금 처리하고 ForTem SDK를 호출하여 NFT 민팅을 실행한다.
 
-  }  
+3. Redeem Item (Import via Webhook)
+Endpoint: POST /api/webhooks/fortem/redeem
+Headers: x-fortem-signature
+Request Body (from ForTem):
+code
+JSON
+{
+  "studio_id": "std_12345abcd",
+  "game_user_id": "usr_98765xyz",
+  "network": "sui-testnet",
+  "nft_token_id": "10024",
+  "in_game_item_id": "sword_001",
+  "redeem_tx_hash": "0xRedeemHash..."
+}
+Logic: 유저가 ForTem에서 NFT를 리딤했을 때 호출되는 S2S 웹훅. 헤더의 서명을 검증한 뒤, 유저의 인게임 인벤토리에 아이템을 복구(지급)한다.

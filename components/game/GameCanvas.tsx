@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import * as Phaser from 'phaser';
 import { LobbyScene } from '@/game/scenes/LobbyScene';
 import { MainScene } from '@/game/scenes/MainScene';
@@ -12,6 +12,7 @@ import { INVENTORY_MAX_SLOTS } from '@/game/config/constants';
 export default function GameCanvas() {
     const gameRef = useRef<HTMLDivElement>(null);
     const supabase = createClient();
+    const [ready, setReady] = useState(false);
 
     useEffect(() => {
         supabase.auth.getSession().then(async ({ data }) => {
@@ -46,37 +47,38 @@ export default function GameCanvas() {
                     console.warn('[Rehydration] DB 인벤토리 로드 실패:', e);
                 }
             }
+            setReady(true);
         });
     }, []);
 
     useEffect(() => {
-        if (typeof window !== 'undefined' && gameRef.current) {
-            const config: Phaser.Types.Core.GameConfig = {
-                type: Phaser.AUTO,
-                parent: gameRef.current,
-                scale: {
-                    mode: Phaser.Scale.FIT,
-                    autoCenter: Phaser.Scale.CENTER_BOTH,
-                    width: 1280,
-                    height: 720,
-                },
-                backgroundColor: '#2d2d2d',
-                scene: [LobbyScene, MainScene],
-                physics: {
-                    default: 'arcade',
-                    arcade: {
-                        gravity: { x: 0, y: 0 },
-                    }
-                },
-            };
+        if (!ready || typeof window === 'undefined' || !gameRef.current) return;
 
-            const game = new Phaser.Game(config);
+        const config: Phaser.Types.Core.GameConfig = {
+            type: Phaser.AUTO,
+            parent: gameRef.current,
+            scale: {
+                mode: Phaser.Scale.FIT,
+                autoCenter: Phaser.Scale.CENTER_BOTH,
+                width: 1280,
+                height: 720,
+            },
+            backgroundColor: '#2d2d2d',
+            scene: [LobbyScene, MainScene],
+            physics: {
+                default: 'arcade',
+                arcade: {
+                    gravity: { x: 0, y: 0 },
+                }
+            },
+        };
 
-            return () => {
-                game.destroy(true);
-            };
-        }
-    }, []);
+        const game = new Phaser.Game(config);
+
+        return () => {
+            game.destroy(true);
+        };
+    }, [ready]);
 
     return <div ref={gameRef} className="rounded-xl overflow-hidden border-4 border-gray-800 shadow-2xl w-full h-full max-w-[1280px] max-h-[720px] mx-auto" />;
 }

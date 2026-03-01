@@ -9,12 +9,19 @@ const SUI_ADDRESS_REGEX = /^0x[a-fA-F0-9]{64}$/;
 export async function POST(req: NextRequest) {
     let lockedIds: string[] = [];
     try {
+        const token = req.headers.get('authorization')?.replace('Bearer ', '');
         const body = await req.json();
         const { game_user_id, in_game_item_id, quantity = 1, metadata, wallet_address } = body;
 
         // 기본 파라미터 유효성 검사
         if (!game_user_id || !in_game_item_id || !wallet_address || !SUI_ADDRESS_REGEX.test(wallet_address)) {
             return NextResponse.json({ error: 'Invalid parameters' }, { status: 400 });
+        }
+
+        // JWT 소유권 검증 — 세션 유저와 game_user_id 불일치 시 403
+        const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+        if (authError || !user || user.id !== game_user_id) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
         }
 
         // 수량 유효성 검사 (1~20개, 정수만)
@@ -86,9 +93,9 @@ export async function POST(req: NextRequest) {
 
         if (mintResponse.statusCode !== 200) throw new Error('Minting failed with status: ' + mintResponse.statusCode);
 
-        // 민팅 성공: N개 DB 로우 모두 minted 처리
+        // 민팅 요청 성공: tx hash 기록 후 webhook이 최종 상태 확정
         await supabase.from('inventory')
-            .update({ status: 'minted', is_minted: true, redeem_tx_hash: mintResponse.data?.objectId })
+            .update({ status: 'minting_in_progress', redeem_tx_hash: mintResponse.data?.objectId })
             .in('id', lockedIds);
 
         return NextResponse.json({
